@@ -1319,16 +1319,14 @@ function parseCSVAndSync(csvText, layoutCsvText) {
         layoutData = parseLayoutGrid(layoutCsvText);
       }
       
-      // Gather unique locations
+      // Gather unique locations (strictly restricted to the ones in the layout sheet)
       let uniqueLocations = [];
       if (layoutData) {
         uniqueLocations = Object.keys(layoutData.locations);
+      } else {
+        // Fallback to default mapped list if layout tab failed to fetch
+        uniqueLocations = ['가', '나', '다', '라', '조정실', '무대'];
       }
-      parsedList.forEach(item => {
-        if (item.rawLoc && !uniqueLocations.includes(item.rawLoc) && item.rawLoc !== "시스템설정" && item.rawLoc !== "기타") {
-          uniqueLocations.push(item.rawLoc);
-        }
-      });
       
       // Update states
       rackNames = {};
