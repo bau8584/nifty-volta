@@ -209,36 +209,11 @@ function switchTab(tabId) {
 }
 
 function setupSwipeGestures() {
-  const swipeContainer = document.getElementById("swipe-container");
-  if (!swipeContainer) return;
-
-  swipeContainer.addEventListener("touchstart", (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
-  }, { passive: true });
-
-  swipeContainer.addEventListener("touchend", (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    touchEndY = e.changedTouches[0].screenY;
-    handleSwipeGesture();
-  }, { passive: true });
+  // Swipe tab gestures disabled per user request to improve mobile scroll stability
 }
 
 function handleSwipeGesture() {
-  const deltaX = touchEndX - touchStartX;
-  const deltaY = touchEndY - touchStartY;
-  
-  if (Math.abs(deltaX) > Math.abs(deltaY)) {
-    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-      if (deltaX < 0) {
-        if (currentTab === 'guide') switchTab('locator');
-        else if (currentTab === 'locator') switchTab('admin');
-      } else if (deltaX > 0) {
-        if (currentTab === 'admin') switchTab('locator');
-        else if (currentTab === 'locator') switchTab('guide');
-      }
-    }
-  }
+  // Swipe tab gestures disabled
 }
 
 /* ==========================================================================
@@ -778,7 +753,7 @@ function initializeWarehouseLayout() {
       // Self-healing Cache-buster: If the loaded cache contains old unmapped shelves like '1학년 연구실',
       // it means the cache was contaminated by the old buggy parser. Let's force-clear it!
       const containsContaminated = Object.values(rackNames).some(name => 
-        name.includes("1학년") || name.includes("천장") || name.includes("무대 아래") || name.includes("연구실")
+        name.includes("1학년") || name.includes("천장") || name.includes("무대 아래") || name.includes("연구실") || name.includes("선반")
       );
       if (containsContaminated) {
         localStorage.removeItem('sports_inventory');
