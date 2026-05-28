@@ -201,6 +201,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedSheetId && sheetIdInput) {
       sheetIdInput.value = savedSheetId;
     }
+
+    const scriptUrlInput = document.getElementById("script-url-input");
+    const savedScriptUrl = localStorage.getItem('google_script_url');
+    if (savedScriptUrl && scriptUrlInput) {
+      scriptUrlInput.value = savedScriptUrl;
+    }
     
     if (sheetIdInput && sheetIdInput.value.trim()) {
       setTimeout(() => {
@@ -1145,6 +1151,19 @@ async function fetchScheduleTab(sheetId) {
   return null;
 }
 
+function saveScriptUrl() {
+  const scriptUrlInput = document.getElementById("script-url-input");
+  if (!scriptUrlInput) return;
+
+  const url = scriptUrlInput.value.trim();
+  try {
+    localStorage.setItem('google_script_url', url);
+    showToast("구글 Apps Script 웹 앱 연동 URL이 저장되었습니다!");
+  } catch (e) {
+    showToast("저장 중 오류가 발생했습니다.");
+  }
+}
+
 async function syncGoogleSheets() {
   const sheetIdInput = document.getElementById("sheet-id-input");
   if (!sheetIdInput) return;
@@ -1720,6 +1739,26 @@ function handleFormSubmit(event, type) {
     itemInput.value = "";
     authorInput.value = "";
     descInput.value = "";
+  }
+
+  // Sync with Google Sheets Apps Script Web API if configured!
+  try {
+    const scriptUrl = localStorage.getItem('google_script_url');
+    if (scriptUrl) {
+      const newestReq = adminRequests[0];
+      if (newestReq) {
+        fetch(scriptUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newestReq)
+        })
+        .then(() => console.log("Form request synced successfully to Google Sheets!"))
+        .catch(err => console.error("Google Sheets sync failed", err));
+      }
+    }
+  } catch (e) {
+    console.error("Fetch sync trigger error", e);
   }
 
   const toast = document.getElementById("toast");
