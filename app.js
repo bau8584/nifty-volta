@@ -396,7 +396,7 @@ function showAutocompleteSuggestions(query) {
       row.className = "flex items-center justify-between px-3 py-2 text-xs text-slate-305 hover:text-white hover:bg-slate-800 cursor-pointer select-none transition-colors";
       
       const rackId = getRackIdByLocation(item.rawLoc);
-      const rackName = rackNames[rackId] || item.rawLoc || '선반';
+      const rackName = rackNames[rackId] || item.rawLoc || '보관장소';
 
       row.innerHTML = `
         <div class="flex items-center space-x-2">
@@ -450,7 +450,7 @@ function filterWarehouseMap(query) {
   if (matchedItem) {
     if (matchedRackId && rackNames[matchedRackId]) {
       // Case A: Map-mapped shelf exists
-      activateRackHighlight(matchedRackId, `🎯 [${matchedItem.name}] 검색 성공! ${rackNames[matchedRackId]} 선반에 위치해 있습니다.`);
+      activateRackHighlight(matchedRackId, `🎯 [${matchedItem.name}] 검색 성공! ${rackNames[matchedRackId]}에 위치해 있습니다.`);
       if (infoDisplay) infoDisplay.classList.remove("hidden");
     } else {
       // Case B: Item found but stored in an unmapped location! (e.g. "평균대-체육관, 다목적실")
@@ -1250,8 +1250,8 @@ function parseLayoutGrid(csvText) {
     const avgR = sumR / cells.length;
     const avgC = sumC / cells.length;
     
-    const xPct = numCols > 1 ? 10 + (avgC / (numCols - 1)) * 80 : 50;
-    const yPct = numRows > 1 ? 10 + (avgR / (numRows - 1)) * 80 : 50;
+    const xPct = numCols > 1 ? 15 + (avgC / (numCols - 1)) * 70 : 50;
+    const yPct = numRows > 1 ? 15 + (avgR / (numRows - 1)) * 70 : 50;
     
     parsedLocations[locName] = {
       x: Math.round(xPct),
@@ -1428,7 +1428,7 @@ function renderInventoryList() {
     const badgeClass = categoryColors[item.category] || 'bg-slate-800 text-slate-400 border-slate-700/50';
 
     const rackId = getRackIdByLocation(item.rawLoc);
-    const rackName = rackNames[rackId] || item.rawLoc || '선반';
+    const rackName = rackNames[rackId] || item.rawLoc || '보관장소';
 
     itemRow.innerHTML = `
       <div class="flex items-center space-x-2 flex-1 min-w-0">
