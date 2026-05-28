@@ -48,7 +48,7 @@
 <body class="bg-slate-950 flex justify-center lg:items-center min-h-screen lg:py-6">
 
   <!-- Responsive Frame Simulator (Mobile: 430px container | PC: 1200px dashboard) -->
-  <main class="w-full max-w-[430px] lg:max-w-[1200px] min-h-screen lg:h-[92vh] bg-slate-900 flex flex-col relative pb-28 lg:pb-8 border-x lg:border border-slate-800/80 shadow-2xl overflow-y-auto transition-all duration-300">
+  <main class="w-full max-w-[430px] lg:max-w-[1200px] min-h-screen lg:h-auto bg-slate-900 flex flex-col relative pb-28 lg:pb-8 border-x lg:border border-slate-800/80 shadow-2xl overflow-y-auto transition-all duration-300">
     
     <!-- 1. Sticky Top Header -->
     <header class="sticky top-0 z-30 w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3.5 flex justify-between items-center">
@@ -111,25 +111,24 @@
       
       <!-- ==================== CATEGORY 1: SMART GUIDE ==================== -->
       <div id="panel-guide" class="tab-panel space-y-4">
-        <!-- Gym Class Status Card -->
-        <div id="gym-status-card" class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 flex items-center justify-between transition-all duration-300">
-          <div class="flex items-center space-x-3 flex-1 min-w-0">
-            <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
-              <span id="gym-status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-              <span id="gym-status-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 status-pulse"></span>
-            </span>
-            <div class="min-w-0 flex-1">
-              <h3 class="text-[0.5625rem] font-bold text-slate-400 leading-none mb-1 tracking-wider uppercase">현재 체육관 수업 상태</h3>
-              <p id="gym-status-text" class="text-xs font-bold text-slate-200 truncate leading-tight">3교시: 6-1 수업 중</p>
-            </div>
-          </div>
-          <div id="gym-status-badge" class="bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[0.5rem] font-bold text-emerald-400 flex-shrink-0">
-            수업 중
-          </div>
-        </div>
-
         <!-- Passwords Action Cards Grid (PC: 4 Columns Wide) -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4.5">
+          <!-- Gym Class Status Card (Takes full width on mobile, 2 columns on PC) -->
+          <div id="gym-status-card" class="col-span-2 bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 flex items-center justify-between transition-all duration-300">
+            <div class="flex items-center space-x-3 flex-1 min-w-0">
+              <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
+                <span id="gym-status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-0"></span>
+                <span id="gym-status-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-400 status-pulse"></span>
+              </span>
+              <div class="min-w-0 flex-1">
+                <h3 class="text-[0.5625rem] font-bold text-slate-400 leading-none mb-1 tracking-wider uppercase">현재 체육관 수업 상태</h3>
+                <p id="gym-status-text" class="text-xs font-bold text-slate-200 truncate leading-tight">체육관 사용 상태 확인 중...</p>
+              </div>
+            </div>
+            <div id="gym-status-badge" class="bg-slate-500/10 border border-slate-500/20 px-2 py-0.5 rounded-full text-[0.5rem] font-bold text-slate-400 flex-shrink-0">
+              로딩 중
+            </div>
+          </div>
           <!-- Door Password Card -->
           <div id="card-door-pw" onclick="togglePassword('door', '1234')" 
             class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 hover:border-blue-500/30 transition-all duration-300 relative group overflow-hidden cursor-pointer select-none">
@@ -175,8 +174,8 @@
           </div>
         </div>
 
-        <!-- Accordions (PC: 2 Columns Grid) -->
-        <div class="space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4.5 mt-2">
+        <!-- Accordions (PC: Vertical stack list) -->
+        <div class="space-y-2.5 mt-2">
           <!-- Menu A: Xiaomi Pump -->
           <div class="accordion-item bg-slate-800/50 border border-slate-700/40 rounded-2xl overflow-hidden transition-all duration-300">
             <button onclick="toggleAccordion(this)" class="w-full flex justify-between items-center px-4.5 py-3.5 text-left focus:outline-none">
@@ -191,8 +190,8 @@
             
             <div class="accordion-content-wrapper">
               <div class="px-4.5 pb-4.5 pt-1 border-t border-slate-800/60 space-y-3">
-                <!-- Air Pump Photo Manual (aspect-ratio preserved) -->
-                <div class="rounded-xl overflow-hidden border border-slate-750/80 shadow-md bg-slate-950/30">
+                <!-- Air Pump Photo Manual (aspect-ratio preserved, half width on PC) -->
+                <div class="rounded-xl overflow-hidden border border-slate-750/80 shadow-md bg-slate-950/30 lg:w-1/2 lg:mx-auto">
                   <img src="assets/air_pump.jpg" alt="샤오미 전동식 공기펌프 2세대" class="w-full h-auto block rounded-xl">
                 </div>
 
@@ -265,8 +264,8 @@
             
             <div class="accordion-content-wrapper">
               <div class="px-4.5 pb-4.5 pt-1 border-t border-slate-800/60 space-y-3 text-xs leading-relaxed text-slate-300">
-                <!-- Wagon Photo Manual (aspect-ratio preserved) -->
-                <div class="rounded-xl overflow-hidden border border-slate-750/80 shadow-md bg-slate-950/30">
+                <!-- Wagon Photo Manual (aspect-ratio preserved, half width on PC) -->
+                <div class="rounded-xl overflow-hidden border border-slate-750/80 shadow-md bg-slate-950/30 lg:w-1/2 lg:mx-auto">
                   <img src="assets/wagon.jpg" alt="접이식 웨건" class="w-full h-auto block rounded-xl">
                 </div>
 
@@ -289,8 +288,8 @@
             </div>
           </div>
 
-          <!-- Menu C: Timetable (PC: Span both Columns) -->
-          <div class="accordion-item bg-slate-800/50 border border-slate-700/40 rounded-2xl overflow-hidden transition-all duration-300 lg:col-span-2">
+          <!-- Menu C: Timetable (PC: Standard full width) -->
+          <div class="accordion-item bg-slate-800/50 border border-slate-700/40 rounded-2xl overflow-hidden transition-all duration-300">
             <button onclick="toggleAccordion(this)" class="w-full flex justify-between items-center px-4.5 py-3.5 text-left focus:outline-none">
               <div class="flex items-center space-x-2.5">
                 <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center border border-red-500/20">
@@ -647,8 +646,8 @@
       <span id="toast-message">비밀번호가 복사되었습니다.</span>
     </div>
 
-    <!-- 8. Bottom Sticky Utility Bar -->
-    <footer class="absolute bottom-0 left-0 right-0 z-30 bg-slate-950/85 backdrop-blur-lg border-t border-slate-850 p-3 pb-5 flex items-center justify-between space-x-3">
+    <!-- 8. Bottom Sticky Utility Bar (Hidden on PC viewports) -->
+    <footer class="absolute bottom-0 left-0 right-0 z-30 bg-slate-950/85 backdrop-blur-lg border-t border-slate-850 p-3 pb-5 flex items-center justify-between space-x-3 lg:hidden">
       <!-- Quick timers block -->
       <div class="flex-1 grid grid-cols-3 gap-2">
         <button onclick="startTimer(60)" class="py-2.5 bg-slate-900/90 border border-slate-800 hover:border-blue-500/30 hover:bg-slate-800 text-slate-300 hover:text-white font-bold font-tech text-xs rounded-xl transition-all active:scale-[0.95] flex flex-col items-center">
@@ -676,6 +675,6 @@
   </main>
 
   <!-- Script logic -->
-  <script src="app.js?v=4.1"></script>
+  <script src="app.js?v=4.2"></script>
 </body>
 </html>

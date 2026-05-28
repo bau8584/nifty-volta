@@ -2285,24 +2285,45 @@ function initializeFontScale() {
     fontScale = 1.0;
   }
   applyFontScale();
+  
+  // Register resize listener to handle transitions between mobile and PC fluidly
+  window.addEventListener('resize', applyFontScale);
 }
 
 function applyFontScale() {
   const html = document.documentElement;
-  if (fontScale === 1.15) {
-    html.style.fontSize = '115%';
-  } else if (fontScale === 1.3) {
-    html.style.fontSize = '130%';
+  const isPC = window.innerWidth >= 1024;
+  
+  if (isPC) {
+    if (fontScale === 1.15) {
+      html.style.fontSize = '140%'; // 1.4x on PC
+    } else if (fontScale === 1.3) {
+      html.style.fontSize = '150%'; // 1.5x on PC
+    } else {
+      html.style.fontSize = '130%'; // Default 1.3x on PC
+    }
   } else {
-    html.style.fontSize = '100%';
+    if (fontScale === 1.15) {
+      html.style.fontSize = '115%'; // 1.15x on Mobile
+    } else if (fontScale === 1.3) {
+      html.style.fontSize = '130%'; // 1.3x on Mobile
+    } else {
+      html.style.fontSize = '100%'; // Default 1.0x on Mobile
+    }
   }
   
   const trigger = document.getElementById("font-scale-trigger");
   if (trigger) {
     let scaleLabel = "";
-    if (fontScale === 1.15) scaleLabel = "1.15x";
-    else if (fontScale === 1.3) scaleLabel = "1.30x";
-    else scaleLabel = "기본";
+    if (isPC) {
+      if (fontScale === 1.15) scaleLabel = "1.4x";
+      else if (fontScale === 1.3) scaleLabel = "1.5x";
+      else scaleLabel = "기본 (1.3x)";
+    } else {
+      if (fontScale === 1.15) scaleLabel = "1.15x";
+      else if (fontScale === 1.3) scaleLabel = "1.30x";
+      else scaleLabel = "기본";
+    }
     
     trigger.innerHTML = `
       <i data-lucide="type" class="w-3.5 h-3.5 ${fontScale !== 1.0 ? 'text-blue-400' : ''}"></i>
@@ -2328,7 +2349,15 @@ function toggleFontScale() {
   } catch (e) {}
   
   applyFontScale();
-  showToast(`글자 크기가 ${fontScale === 1.0 ? '기본(1배)' : fontScale + '배'}로 설정되었습니다.`);
+  
+  const isPC = window.innerWidth >= 1024;
+  let scaleText = "";
+  if (isPC) {
+    scaleText = fontScale === 1.0 ? "기본(1.3배)" : (fontScale === 1.15 ? "1.4배" : "1.5배");
+  } else {
+    scaleText = fontScale === 1.0 ? "기본(1배)" : (fontScale === 1.15 ? "1.15배" : "1.3배");
+  }
+  showToast(`글자 크기가 ${scaleText}로 설정되었습니다.`);
 }
 
 /* ==========================================================================
