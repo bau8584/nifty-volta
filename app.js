@@ -22,6 +22,36 @@ let RACK_MAPPING = {}; // Dynamic highlights & descriptions
 // Font Scale & Schedule Globals
 let fontScale = 1.0;
 let gymSchedule = [];
+let isAdminMode = false;
+let adminRequests = [];
+let expandedRequestIds = new Set();
+
+const DEFAULT_REQUESTS = [
+  {
+    id: 1,
+    type: 'repair',
+    author: '박준영 (6학년)',
+    item: '피구공 바람 빠짐',
+    desc: '피구공 2개가 바람 주입구 파손으로 공기가 계속 빠집니다.',
+    status: 'pending',
+    hidden: false,
+    date: '2026-05-28 10:30',
+    replies: [
+      { author: '체육부장 (관리자)', content: '글리세린 주입하여 밸브 점검 후 신규 교체 조치하겠습니다.', date: '2026-05-28 11:15' }
+    ]
+  },
+  {
+    id: 2,
+    type: 'wish',
+    author: '김지은 (3학년)',
+    item: '안전 피구공 10개',
+    desc: '저학년 피구 수업 시 부상 방지를 위해 스펀지 재질의 안전 공이 추가로 필요합니다.',
+    status: 'completed',
+    hidden: false,
+    date: '2026-05-27 14:20',
+    replies: []
+  }
+];
 const DEFAULT_SCHEDULE = [
   { period: "1교시", start: "09:00", end: "09:40", days: { "월요일": "6-10/1학년", "화요일": "5-3", "수요일": "6-2/2-1", "목요일": "5-1/1-2", "금요일": "6-4/3-2" } },
   { period: "2교시", start: "09:50", end: "10:30", days: { "월요일": "4-2", "화요일": "4-2", "수요일": "4-1/3-1", "목요일": "6-4/4-1", "금요일": "5-4/4-3" } },
@@ -733,6 +763,7 @@ function toggleAdminConfig() {
   
   if (isHidden) {
     panel.classList.remove("hidden");
+    isAdminMode = true;
     
     // Smooth scroll down to settings panel
     setTimeout(() => {
@@ -740,7 +771,10 @@ function toggleAdminConfig() {
     }, 150);
   } else {
     panel.classList.add("hidden");
+    isAdminMode = false;
   }
+
+  renderAdminRequests();
 
   if (typeof lucide !== 'undefined') {
     lucide.createIcons();
@@ -828,6 +862,19 @@ function initializeWarehouseLayout() {
   rebuildRackMapping();
   renderWarehouseMap();
   renderInventoryList();
+
+  try {
+    const cachedRequests = localStorage.getItem('admin_requests');
+    if (cachedRequests) {
+      adminRequests = JSON.parse(cachedRequests);
+    } else {
+      adminRequests = DEFAULT_REQUESTS;
+      localStorage.setItem('admin_requests', JSON.stringify(DEFAULT_REQUESTS));
+    }
+  } catch (e) {
+    adminRequests = DEFAULT_REQUESTS;
+  }
+  renderAdminRequests();
 }
 
 function rebuildRackMapping() {
@@ -1607,29 +1654,71 @@ function handleFormSubmit(event, type) {
   
   let item = "";
   let desc = "";
+  let author = "";
   let successMsg = "";
   
+  const now = new Date();
+  const dateStr = `${now.getFullYear().toString().substring(2)}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
   if (type === 'repair') {
     const itemInput = document.getElementById("repair-item");
+    const authorInput = document.getElementById("repair-author");
     const descInput = document.getElementById("repair-desc");
+    
     item = itemInput.value.trim();
+    author = authorInput.value.trim();
     desc = descInput.value.trim();
     successMsg = `🔧 [정비 요청] "${item}" 건이 접수되었습니다!`;
     
-    saveToMockDB('repair_requests', { item, desc, date: new Date().toISOString() });
+    const newReq = {
+      id: adminRequests.length > 0 ? Math.max(...adminRequests.map(r => r.id)) + 1 : 1,
+      type: 'repair',
+      author,
+      item,
+      desc,
+      status: 'pending',
+      hidden: false,
+      date: dateStr,
+      replies: []
+    };
+    
+    adminRequests.unshift(newReq);
+    expandedRequestIds.add(newReq.id);
+    localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
+    renderAdminRequests();
     
     itemInput.value = "";
+    authorInput.value = "";
     descInput.value = "";
   } else if (type === 'wish') {
     const itemInput = document.getElementById("wish-item");
+    const authorInput = document.getElementById("wish-author");
     const descInput = document.getElementById("wish-desc");
+    
     item = itemInput.value.trim();
+    author = authorInput.value.trim();
     desc = descInput.value.trim();
     successMsg = `🛍️ [구매 희망] "${item}" 건이 추가되었습니다!`;
     
-    saveToMockDB('wish_list', { item, desc, date: new Date().toISOString() });
+    const newReq = {
+      id: adminRequests.length > 0 ? Math.max(...adminRequests.map(r => r.id)) + 1 : 1,
+      type: 'wish',
+      author,
+      item,
+      desc,
+      status: 'pending',
+      hidden: false,
+      date: dateStr,
+      replies: []
+    };
+    
+    adminRequests.unshift(newReq);
+    expandedRequestIds.add(newReq.id);
+    localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
+    renderAdminRequests();
     
     itemInput.value = "";
+    authorInput.value = "";
     descInput.value = "";
   }
 
@@ -1961,6 +2050,227 @@ function setupMapPanning() {
 }
 
 /* ==========================================================================
+   Administrative Comment Request Timeline Board
+   ========================================================================== */
+function renderAdminRequests() {
+  const container = document.getElementById("requests-timeline");
+  const countBadge = document.getElementById("requests-count");
+  if (!container) return;
+
+  container.innerHTML = "";
+  
+  const filtered = adminRequests.filter(r => isAdminMode || !r.hidden);
+  
+  if (countBadge) {
+    countBadge.textContent = `${filtered.length}개 접수`;
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="py-6 text-center text-slate-500 font-medium text-xs select-none">
+        접수된 행정 요청 코멘트가 없습니다.
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(r => {
+    const card = document.createElement("div");
+    
+    let borderClass = r.type === 'repair' ? 'border-red-500/20' : 'border-blue-500/20';
+    let bgClass = 'bg-slate-900/40';
+    let opacityClass = r.hidden ? 'opacity-50' : 'opacity-100';
+    
+    card.className = `${bgClass} border ${borderClass} ${opacityClass} p-3.5 rounded-2xl space-y-3 transition-all`;
+
+    const typeLabel = r.type === 'repair' 
+      ? '<span class="text-[0.5625rem] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">🔧 파손 정비</span>'
+      : '<span class="text-[0.5625rem] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">🛍️ 교구 구매</span>';
+
+    const statusLabel = r.status === 'completed'
+      ? '<span class="text-[0.5625rem] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">✅ 처리 완료</span>'
+      : '<span class="text-[0.5625rem] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">⏱️ 처리 대기</span>';
+
+    const hiddenLabel = r.hidden 
+      ? '<span class="text-[0.5625rem] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">🔒 숨김 처리됨</span>'
+      : '';
+
+    let adminControlsHtml = "";
+    if (isAdminMode) {
+      adminControlsHtml = `
+        <div class="flex items-center justify-between border-t border-slate-800/80 pt-3 mt-3 text-[0.5625rem] gap-2">
+          <div class="flex space-x-2">
+            <button onclick="toggleRequestStatus(${r.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-750 hover:border-slate-650 rounded-lg active:scale-95 transition-all">
+              ${r.status === 'completed' ? '⏱️ 대기로 변경' : '✅ 완료로 변경'}
+            </button>
+            <button onclick="toggleRequestVisibility(${r.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-750 hover:border-slate-650 rounded-lg active:scale-95 transition-all">
+              ${r.hidden ? '👁️ 공개로 변경' : '👁️‍🗨️ 숨김 처리'}
+            </button>
+          </div>
+          <span class="text-slate-500 font-tech">ID: #${r.id}</span>
+        </div>
+
+        <div class="flex items-center space-x-2 mt-2 pt-2 border-t border-slate-800/40">
+          <input type="text" id="reply-input-${r.id}" placeholder="관리자 답변 코멘트를 입력하세요..." 
+            class="flex-1 text-[0.625rem] px-2.5 py-1.5 bg-slate-950/80 border border-slate-800 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50">
+          <button onclick="addAdminReply(${r.id})" class="px-3 py-1.5 bg-emerald-650 hover:bg-emerald-500 text-white font-bold text-[0.5625rem] rounded-lg active:scale-95 transition-all whitespace-nowrap">
+            답글 달기
+          </button>
+        </div>
+      `;
+    }
+
+    let repliesHtml = "";
+    if (r.replies && r.replies.length > 0) {
+      repliesHtml = `
+        <div class="space-y-2 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/40">
+          <h4 class="text-[0.5625rem] font-bold text-slate-500 uppercase tracking-wider">💬 관리자 코멘트 답변</h4>
+          <div class="divide-y divide-slate-900">
+      `;
+      r.replies.forEach(reply => {
+        repliesHtml += `
+            <div class="py-1.5 first:pt-0 last:pb-0 space-y-1">
+              <div class="flex justify-between items-center text-[0.5rem]">
+                <span class="font-extrabold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.25 rounded">${reply.author}</span>
+                <span class="text-slate-600 font-tech">${reply.date}</span>
+              </div>
+              <p class="text-[0.5625rem] text-slate-300 leading-relaxed font-medium">${reply.content}</p>
+            </div>
+        `;
+      });
+      repliesHtml += `
+          </div>
+        </div>
+      `;
+    }
+
+    const isExpanded = expandedRequestIds.has(r.id);
+    
+    const commentBtnHtml = `
+      <div class="flex items-center justify-between border-t border-slate-850 pt-2.5 mt-2.5">
+        <button onclick="toggleRequestComments(${r.id})" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-950/40 hover:bg-slate-900 text-[0.5625rem] text-slate-300 hover:text-white border border-slate-850 hover:border-slate-800 active:scale-95 transition-all select-none cursor-pointer">
+          <i data-lucide="message-square" class="w-3 h-3 text-emerald-400"></i>
+          <span class="font-bold">💬 코멘트</span>
+          <span class="bg-emerald-500/10 text-emerald-400 px-1.5 py-0.25 rounded-md font-tech font-bold text-[0.5rem] ml-1">${r.replies.length}</span>
+        </button>
+        ${!isAdminMode ? `<span class="text-[0.5rem] font-tech text-slate-600 select-none">ID: #${r.id}</span>` : ''}
+      </div>
+    `;
+
+    let commentsSectionContent = repliesHtml + adminControlsHtml;
+    if (commentsSectionContent === "" && !isAdminMode) {
+      commentsSectionContent = `
+        <div class="py-2.5 text-center text-slate-500 font-medium text-[0.5625rem] select-none bg-slate-950/20 rounded-xl border border-slate-850/50">
+          등록된 관리자 답변 코멘트가 없습니다.
+        </div>
+      `;
+    }
+
+    const commentsSectionHtml = `
+      <div id="comments-section-${r.id}" class="${isExpanded ? '' : 'hidden'} space-y-3 pt-3 border-t border-slate-800/40 mt-2.5 transition-all duration-300">
+        ${commentsSectionContent}
+      </div>
+    `;
+
+    card.innerHTML = `
+      <div class="flex justify-between items-start">
+        <div class="flex items-center space-x-1.5">
+          ${typeLabel}
+          ${statusLabel}
+          ${hiddenLabel}
+        </div>
+        <span class="text-[0.5rem] font-tech text-slate-500">${r.date}</span>
+      </div>
+      
+      <div class="space-y-1">
+        <div class="flex justify-between items-baseline">
+          <h4 class="text-xs font-extrabold text-slate-200 truncate pr-2">${r.item}</h4>
+          <span class="text-[0.5625rem] font-medium text-slate-400 bg-slate-850 px-2 py-0.5 rounded-lg whitespace-nowrap">${r.author}</span>
+        </div>
+        <p class="text-[0.5625rem] text-slate-400 leading-relaxed font-medium bg-slate-950/20 p-2 rounded-xl border border-slate-850">${r.desc}</p>
+      </div>
+
+      ${commentBtnHtml}
+      ${commentsSectionHtml}
+    `;
+
+    container.appendChild(card);
+  });
+
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+}
+
+function toggleRequestComments(requestId) {
+  const section = document.getElementById(`comments-section-${requestId}`);
+  if (!section) return;
+
+  if (expandedRequestIds.has(requestId)) {
+    expandedRequestIds.delete(requestId);
+    section.classList.add("hidden");
+  } else {
+    expandedRequestIds.add(requestId);
+    section.classList.remove("hidden");
+  }
+}
+
+function addAdminReply(requestId) {
+  const inputEl = document.getElementById(`reply-input-${requestId}`);
+  if (!inputEl) return;
+  
+  const content = inputEl.value.trim();
+  if (!content) {
+    alert("답변 코멘트 내용을 입력해 주세요.");
+    return;
+  }
+
+  const req = adminRequests.find(r => r.id === requestId);
+  if (req) {
+    const now = new Date();
+    const dateStr = `${now.getFullYear().toString().substring(2)}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    
+    req.replies.push({
+      author: '체육부장 (관리자)',
+      content: content,
+      date: dateStr
+    });
+    
+    try {
+      localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
+    } catch (e) {}
+    
+    inputEl.value = "";
+    renderAdminRequests();
+    showToast("관리자 코멘트 답변이 성공적으로 등록되었습니다!");
+  }
+}
+
+function toggleRequestStatus(requestId) {
+  const req = adminRequests.find(r => r.id === requestId);
+  if (req) {
+    req.status = req.status === 'completed' ? 'pending' : 'completed';
+    try {
+      localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
+    } catch (e) {}
+    renderAdminRequests();
+    showToast(`요청 상태가 ${req.status === 'completed' ? '처리 완료' : '처리 대기'} 상태로 전환되었습니다.`);
+  }
+}
+
+function toggleRequestVisibility(requestId) {
+  const req = adminRequests.find(r => r.id === requestId);
+  if (req) {
+    req.hidden = !req.hidden;
+    try {
+      localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
+    } catch (e) {}
+    renderAdminRequests();
+    showToast(`해당 요청이 일반 사용자에게 ${req.hidden ? '숨김' : '공개'} 처리되었습니다.`);
+  }
+}
+
+/* ==========================================================================
    Accessibility Root Font Scaling Logic
    ========================================================================== */
 function initializeFontScale() {
@@ -2161,32 +2471,37 @@ function updateLiveSchedule() {
   // 2. Update Header Occupancy Status Indicator
   if (statusText && statusDot && statusPing && statusBadge) {
     if (currentDay === '일요일' || currentDay === '토요일') {
-      statusText.textContent = "⚪ 주말: 체육관 공석";
-      statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-slate-400 status-pulse";
+      statusText.textContent = "주말: 체육관 공석";
+      statusDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-400 status-pulse";
       statusPing.className = "absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-0";
-      statusBadge.className = "flex items-center space-x-2 bg-slate-500/10 border border-slate-500/20 px-2.5 py-1 rounded-full";
+      statusBadge.textContent = "미운영";
+      statusBadge.className = "bg-slate-500/10 border border-slate-500/20 px-2 py-0.5 rounded-full text-[0.5rem] font-bold text-slate-400 flex-shrink-0";
     } else if (isBreakTime) {
-      statusText.textContent = `🟡 쉬는시간: 환기 및 대기`;
-      statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-amber-500 status-pulse";
+      statusText.textContent = "쉬는 시간: 환기 및 대기";
+      statusDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 status-pulse";
       statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75";
-      statusBadge.className = "flex items-center space-x-2 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full";
+      statusBadge.textContent = "쉬는 시간";
+      statusBadge.className = "bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full text-[0.5rem] font-bold text-amber-400 flex-shrink-0";
     } else if (activePeriod) {
       if (!activeClass || activeClass === "공석" || activeClass === "없음" || activeClass.trim() === "") {
-        statusText.textContent = `⚪ ${activePeriod.period}: 체육관 공석`;
-        statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-slate-400 status-pulse";
+        statusText.textContent = `${activePeriod.period}: 체육관 공석`;
+        statusDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-400 status-pulse";
         statusPing.className = "absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-0";
-        statusBadge.className = "flex items-center space-x-2 bg-slate-500/10 border border-slate-500/20 px-2.5 py-1 rounded-full";
+        statusBadge.textContent = "공석";
+        statusBadge.className = "bg-slate-500/10 border border-slate-500/20 px-2 py-0.5 rounded-full text-[0.5rem] font-bold text-slate-400 flex-shrink-0";
       } else {
-        statusText.textContent = `🟢 ${activePeriod.period}: ${activeClass} 수업 중`;
-        statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-500 status-pulse";
+        statusText.textContent = `${activePeriod.period}: ${activeClass} 수업 중`;
+        statusDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 status-pulse";
         statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75";
-        statusBadge.className = "flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full";
+        statusBadge.textContent = "수업 중";
+        statusBadge.className = "bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[0.5rem] font-bold text-emerald-400 flex-shrink-0";
       }
     } else {
-      statusText.textContent = "⚪ 방과 후: 체육관 공석";
-      statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-slate-400 status-pulse";
+      statusText.textContent = "방과 후: 체육관 공석";
+      statusDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-400 status-pulse";
       statusPing.className = "absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-0";
-      statusBadge.className = "flex items-center space-x-2 bg-slate-500/10 border border-slate-500/20 px-2.5 py-1 rounded-full";
+      statusBadge.textContent = "공석";
+      statusBadge.className = "bg-slate-500/10 border border-slate-500/20 px-2 py-0.5 rounded-full text-[0.5rem] font-bold text-slate-400 flex-shrink-0";
     }
   }
 
