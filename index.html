@@ -45,10 +45,10 @@
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-950 flex justify-center min-h-screen">
+<body class="bg-slate-950 flex justify-center lg:items-center min-h-screen lg:py-6">
 
-  <!-- Mobile Frame Emulator (Optimized for 390px-430px) -->
-  <main class="w-full max-w-[430px] min-h-screen bg-slate-900 flex flex-col relative pb-28 border-x border-slate-800 shadow-2xl overflow-y-auto">
+  <!-- Responsive Frame Simulator (Mobile: 430px container | PC: 1200px dashboard) -->
+  <main class="w-full max-w-[430px] lg:max-w-[1200px] min-h-screen lg:h-[92vh] bg-slate-900 flex flex-col relative pb-28 lg:pb-8 border-x lg:border border-slate-800/80 shadow-2xl overflow-y-auto transition-all duration-300">
     
     <!-- 1. Sticky Top Header -->
     <header class="sticky top-0 z-30 w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3.5 flex justify-between items-center">
@@ -128,8 +128,8 @@
           </div>
         </div>
 
-        <!-- Passwords Action Cards Grid -->
-        <div class="grid grid-cols-2 gap-3">
+        <!-- Passwords Action Cards Grid (PC: 4 Columns Wide) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4.5">
           <!-- Door Password Card -->
           <div id="card-door-pw" onclick="togglePassword('door', '1234')" 
             class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 hover:border-blue-500/30 transition-all duration-300 relative group overflow-hidden cursor-pointer select-none">
@@ -175,8 +175,8 @@
           </div>
         </div>
 
-        <!-- Accordions -->
-        <div class="space-y-2.5">
+        <!-- Accordions (PC: 2 Columns Grid) -->
+        <div class="space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4.5 mt-2">
           <!-- Menu A: Xiaomi Pump -->
           <div class="accordion-item bg-slate-800/50 border border-slate-700/40 rounded-2xl overflow-hidden transition-all duration-300">
             <button onclick="toggleAccordion(this)" class="w-full flex justify-between items-center px-4.5 py-3.5 text-left focus:outline-none">
@@ -289,8 +289,8 @@
             </div>
           </div>
 
-          <!-- Menu C: Timetable -->
-          <div class="accordion-item bg-slate-800/50 border border-slate-700/40 rounded-2xl overflow-hidden transition-all duration-300">
+          <!-- Menu C: Timetable (PC: Span both Columns) -->
+          <div class="accordion-item bg-slate-800/50 border border-slate-700/40 rounded-2xl overflow-hidden transition-all duration-300 lg:col-span-2">
             <button onclick="toggleAccordion(this)" class="w-full flex justify-between items-center px-4.5 py-3.5 text-left focus:outline-none">
               <div class="flex items-center space-x-2.5">
                 <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center border border-red-500/20">
@@ -361,8 +361,8 @@
         </div>
       </div>
 
-      <!-- ==================== CATEGORY 2: GEAR LOCATOR ==================== -->
-      <div id="panel-locator" class="tab-panel space-y-4 hidden">
+      <!-- ==================== CATEGORY 2: GEAR LOCATOR (PC: 2 Columns Side-by-Side) ==================== -->
+      <div id="panel-locator" class="tab-panel space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-5.5 hidden">
 
         <!-- 1. Interactive 2.5D Warehouse Floor Plan Map Section -->
         <div class="bg-slate-800/60 rounded-3xl p-4 border border-slate-700/50 space-y-4">
@@ -394,8 +394,8 @@
 
           </div>
 
-          <!-- 3D Map Viewport -->
-          <div class="isometric-viewport w-full h-[230px] bg-slate-950 border border-slate-800 relative flex items-center justify-center">
+          <!-- 3D Map Viewport (PC: Expanded Height) -->
+          <div class="isometric-viewport w-full h-[230px] lg:h-[360px] bg-slate-950 border border-slate-800 relative flex items-center justify-center">
             
             <!-- 2D / 3D Mode Toggle Switcher -->
             <div class="absolute top-3 left-3 z-30 flex bg-slate-900/95 border border-slate-700/60 p-0.5 rounded-xl shadow-lg backdrop-blur-md">
@@ -447,8 +447,8 @@
           </div>
         </div>
 
-        <!-- 2. Integrated All Gear Inventory Directory (창속의 창) -->
-        <div class="bg-slate-800/80 rounded-3xl p-4 border border-slate-700/50 space-y-3 flex flex-col max-h-[380px] mt-4">
+        <!-- 2. Integrated All Gear Inventory Directory (PC: Align Height) -->
+        <div class="bg-slate-800/80 rounded-3xl p-4 border border-slate-700/50 space-y-3 flex flex-col max-h-[380px] lg:max-h-[500px] mt-4 lg:mt-0 lg:h-full">
           <div class="flex justify-between items-center pb-2 border-b border-slate-700/50">
             <div class="flex items-center space-x-2">
               <i data-lucide="list-checks" class="w-4.5 h-4.5 text-emerald-400 animate-pulse"></i>
@@ -464,8 +464,8 @@
           </div>
         </div>
 
-        <!-- 4. Hidden Teacher Admin Configuration Panel (Slide-opens on Cog Click) -->
-        <div id="admin-config-panel" class="hidden bg-slate-900 border border-slate-800 rounded-3xl p-4 mt-3 space-y-4 shadow-2xl transition-all duration-300">
+        <!-- 4. Hidden Teacher Admin Configuration Panel (PC: Spans both Columns) -->
+        <div id="admin-config-panel" class="hidden bg-slate-900 border border-slate-800 rounded-3xl p-4 mt-3 lg:mt-4 lg:col-span-2 space-y-4 shadow-2xl transition-all duration-300">
           
           <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
             <i data-lucide="sliders" class="w-4 h-4 text-blue-500 animate-spin [animation-duration:15s]"></i>
@@ -505,90 +505,96 @@
 
       </div>
 
-      <!-- ==================== CATEGORY 3: ADMIN CENTER ==================== -->
-      <div id="panel-admin" class="tab-panel space-y-4 hidden">
-        <!-- Form 1: Breakage -->
-        <div class="glass-panel rounded-3xl p-4 border border-white/5 space-y-3.5">
-          <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
-            <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center border border-red-500/20">
-              <i data-lucide="wrench" class="w-3.5 h-3.5 text-red-400"></i>
+      <!-- ==================== CATEGORY 3: ADMIN CENTER (PC: Split Layout Columns) ==================== -->
+      <div id="panel-admin" class="tab-panel space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-5.5 hidden">
+        <!-- Left Column: Forms (Occupies 5 columns on PC) -->
+        <div class="lg:col-span-5 space-y-4 flex flex-col justify-start">
+          <!-- Form 1: Breakage -->
+          <div class="glass-panel rounded-3xl p-4 border border-white/5 space-y-3.5">
+            <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
+              <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                <i data-lucide="wrench" class="w-3.5 h-3.5 text-red-400"></i>
+              </div>
+              <h3 class="text-xs font-bold text-red-400">🔧 비품 파손 및 정비 요청</h3>
             </div>
-            <h3 class="text-xs font-bold text-red-400">🔧 비품 파손 및 정비 요청</h3>
+            
+            <form id="repair-form" onsubmit="handleFormSubmit(event, 'repair')" class="space-y-3">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div class="space-y-1">
+                  <label for="repair-item" class="text-[0.625rem] font-bold text-slate-400">비품명</label>
+                  <input type="text" id="repair-item" required placeholder="예: 축구공 4번 바람 빠짐" 
+                    class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20 transition-all font-medium">
+                </div>
+                <div class="space-y-1">
+                  <label for="repair-author" class="text-[0.625rem] font-bold text-slate-400">작성자(소속)</label>
+                  <input type="text" id="repair-author" required placeholder="예: 홍길동 (5학년)" 
+                    class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20 transition-all font-medium">
+                </div>
+              </div>
+              <div class="space-y-1">
+                <label for="repair-desc" class="text-[0.625rem] font-bold text-slate-400">상태 상세 설명</label>
+                <textarea id="repair-desc" required rows="2" placeholder="공의 바람 밸브가 망가졌거나 조절 벨트 버클이 부러졌습니다." 
+                  class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20 transition-all font-medium resize-none"></textarea>
+              </div>
+              <button type="submit" class="w-full py-2 bg-red-650 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-900/10 active:scale-[0.98] transition-all flex justify-center items-center space-x-1">
+                <span>제출하기</span>
+                <i data-lucide="send" class="w-3 h-3"></i>
+              </button>
+            </form>
           </div>
-          
-          <form id="repair-form" onsubmit="handleFormSubmit(event, 'repair')" class="space-y-3">
-            <div class="grid grid-cols-2 gap-2.5">
-              <div class="space-y-1">
-                <label for="repair-item" class="text-[0.625rem] font-bold text-slate-400">비품명</label>
-                <input type="text" id="repair-item" required placeholder="예: 축구공 4번 바람 빠짐" 
-                  class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20 transition-all font-medium">
+
+          <!-- Form 2: Wish List -->
+          <div class="glass-panel rounded-3xl p-4 border border-white/5 space-y-3.5">
+            <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
+              <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-blue-400"></i>
+              </div>
+              <h3 class="text-xs font-bold text-blue-400">🛍️ 체육 교구 구매 희망 리스트</h3>
+            </div>
+            
+            <form id="wish-form" onsubmit="handleFormSubmit(event, 'wish')" class="space-y-3">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div class="space-y-1">
+                  <label for="wish-item" class="text-[0.625rem] font-bold text-slate-400">추천 교구명</label>
+                  <input type="text" id="wish-item" required placeholder="예: 야구 티볼 안전 배트 키트" 
+                    class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium">
+                </div>
+                <div class="space-y-1">
+                  <label for="wish-author" class="text-[0.625rem] font-bold text-slate-400">작성자(소속)</label>
+                  <input type="text" id="wish-author" required placeholder="예: 김지은 (3학년)" 
+                    class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium">
+                </div>
               </div>
               <div class="space-y-1">
-                <label for="repair-author" class="text-[0.625rem] font-bold text-slate-400">작성자(소속)</label>
-                <input type="text" id="repair-author" required placeholder="예: 홍길동 (5학년)" 
-                  class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20 transition-all font-medium">
+                <label for="wish-desc" class="text-[0.625rem] font-bold text-slate-400">활용 수업 내용</label>
+                <textarea id="wish-desc" required rows="2" placeholder="5학년 뉴스포츠 경기 및 소체육회 대항전 교구로 활용 예정입니다." 
+                  class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium resize-none"></textarea>
               </div>
-            </div>
-            <div class="space-y-1">
-              <label for="repair-desc" class="text-[0.625rem] font-bold text-slate-400">상태 상세 설명</label>
-              <textarea id="repair-desc" required rows="2" placeholder="공의 바람 밸브가 망가졌거나 조절 벨트 버클이 부러졌습니다." 
-                class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20 transition-all font-medium resize-none"></textarea>
-            </div>
-            <button type="submit" class="w-full py-2 bg-red-650 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-900/10 active:scale-[0.98] transition-all flex justify-center items-center space-x-1">
-              <span>제출하기</span>
-              <i data-lucide="send" class="w-3 h-3"></i>
-            </button>
-          </form>
+              <button type="submit" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-900/10 active:scale-[0.98] transition-all flex justify-center items-center space-x-1">
+                <span>구매 리스트에 추가</span>
+                <i data-lucide="plus-circle" class="w-3 h-3"></i>
+              </button>
+            </form>
+          </div>
         </div>
 
-        <!-- Form 2: Wish List -->
-        <div class="glass-panel rounded-3xl p-4 border border-white/5 space-y-3.5">
-          <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
-            <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-              <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-blue-400"></i>
-            </div>
-            <h3 class="text-xs font-bold text-blue-400">🛍️ 체육 교구 구매 희망 리스트</h3>
-          </div>
-          
-          <form id="wish-form" onsubmit="handleFormSubmit(event, 'wish')" class="space-y-3">
-            <div class="grid grid-cols-2 gap-2.5">
-              <div class="space-y-1">
-                <label for="wish-item" class="text-[0.625rem] font-bold text-slate-400">추천 교구명</label>
-                <input type="text" id="wish-item" required placeholder="예: 야구 티볼 안전 배트 키트" 
-                  class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium">
+        <!-- Right Column: Request Status Timeline (Occupies 7 columns on PC) -->
+        <div class="lg:col-span-7 flex flex-col h-full">
+          <!-- Request Status Board (Comments Timeline) -->
+          <div class="glass-panel rounded-3xl p-4 border border-white/5 space-y-3.5 lg:h-full lg:flex lg:flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 flex-shrink-0">
+              <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                  <i data-lucide="message-square" class="w-3.5 h-3.5 text-emerald-400"></i>
+                </div>
+                <h3 class="text-xs font-bold text-slate-205">💬 행정 요청 코멘트 현황판</h3>
               </div>
-              <div class="space-y-1">
-                <label for="wish-author" class="text-[0.625rem] font-bold text-slate-400">작성자(소속)</label>
-                <input type="text" id="wish-author" required placeholder="예: 김지은 (3학년)" 
-                  class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium">
-              </div>
+              <span id="requests-count" class="text-[0.5625rem] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full font-tech">0개 접수</span>
             </div>
-            <div class="space-y-1">
-              <label for="wish-desc" class="text-[0.625rem] font-bold text-slate-400">활용 수업 내용</label>
-              <textarea id="wish-desc" required rows="2" placeholder="5학년 뉴스포츠 경기 및 소체육회 대항전 교구로 활용 예정입니다." 
-                class="w-full text-xs px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium resize-none"></textarea>
-            </div>
-            <button type="submit" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-900/10 active:scale-[0.98] transition-all flex justify-center items-center space-x-1">
-              <span>구매 리스트에 추가</span>
-              <i data-lucide="plus-circle" class="w-3 h-3"></i>
-            </button>
-          </form>
-        </div>
 
-        <!-- Request Status Board (Comments Timeline) -->
-        <div class="glass-panel rounded-3xl p-4 border border-white/5 space-y-3.5">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <div class="flex items-center space-x-2">
-              <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                <i data-lucide="message-square" class="w-3.5 h-3.5 text-emerald-400"></i>
-              </div>
-              <h3 class="text-xs font-bold text-slate-205">💬 행정 요청 코멘트 현황판</h3>
+            <div id="requests-timeline" class="space-y-3 max-h-[350px] lg:max-h-[680px] overflow-y-auto pr-1 flex-1">
+              <!-- Dynamically populated by app.js -->
             </div>
-            <span id="requests-count" class="text-[0.5625rem] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full font-tech">0개 접수</span>
-          </div>
-
-          <div id="requests-timeline" class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-            <!-- Dynamically populated by app.js -->
           </div>
         </div>
       </div>
