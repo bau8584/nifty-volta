@@ -277,18 +277,25 @@ function togglePassword(cardType, actualPassword) {
   const copyBtn = cardEl.querySelector(".pw-copy-btn");
   
   const isRevealed = cardEl.dataset.revealed === "true";
+  const hintEl = document.getElementById("box-pw-hint");
 
   if (isRevealed) {
     textEl.textContent = "••••";
     textEl.classList.remove("revealed");
     eyeBtn.innerHTML = `<i data-lucide="eye" class="w-3.5 h-3.5"></i>`;
     copyBtn.classList.add("hidden");
+    if (cardType === 'box' && hintEl) {
+      hintEl.classList.add("hidden");
+    }
     cardEl.dataset.revealed = "false";
   } else {
     textEl.textContent = actualPassword;
     textEl.classList.add("revealed");
     eyeBtn.innerHTML = `<i data-lucide="eye-off" class="w-3.5 h-3.5 text-blue-400"></i>`;
     copyBtn.classList.remove("hidden");
+    if (cardType === 'box' && hintEl) {
+      hintEl.classList.remove("hidden");
+    }
     cardEl.dataset.revealed = "true";
   }
 
@@ -395,8 +402,8 @@ function showAutocompleteSuggestions(query) {
           <span class="font-semibold">${item.name}</span>
         </div>
         <div class="flex items-center space-x-1.5">
-          <span class="text-[9px] bg-slate-850 text-slate-400 px-1.5 py-0.5 rounded">${rackName}</span>
-          <span class="text-[9px] text-blue-400 font-tech">Qty: ${item.qty}</span>
+          <span class="text-[0.5625rem] bg-slate-850 text-slate-400 px-1.5 py-0.5 rounded">${rackName}</span>
+          <span class="text-[0.5625rem] text-blue-400 font-tech">Qty: ${item.qty}</span>
         </div>
       `;
       
@@ -511,7 +518,7 @@ function activateRackHighlight(rackId, infoMessage) {
 
   const infoText = document.getElementById("rack-info-text");
   if (infoText) {
-    infoText.innerHTML = `<span class="text-blue-400 font-bold glow-text-blue text-[11px]">${infoMessage}</span>`;
+    infoText.innerHTML = `<span class="text-blue-400 font-bold glow-text-blue text-[0.6875rem]">${infoMessage}</span>`;
   }
   const infoDisplay = document.getElementById("rack-info-display");
   if (infoDisplay) infoDisplay.classList.remove("hidden");
@@ -931,17 +938,17 @@ function populateCoordinateSliders() {
     sliderRow.className = "bg-slate-950/40 p-2.5 border border-slate-800/80 rounded-xl space-y-1.5";
     
     sliderRow.innerHTML = `
-      <div class="flex justify-between items-center text-[10px]">
-        <span class="font-bold text-slate-350">${name} 보관장소 X/Y 배치</span>
+      <div class="flex justify-between items-center text-[0.625rem]">
+        <span class="font-bold text-slate-355">${name} 보관장소 X/Y 배치</span>
         <span id="label-${rId}" class="font-tech text-blue-400 font-semibold">X: ${offset.x}, Y: ${offset.y}</span>
       </div>
       <div class="grid grid-cols-2 gap-2">
         <div class="flex items-center space-x-1.5">
-          <span class="text-[8px] text-slate-500 font-bold font-tech">X</span>
+          <span class="text-[0.5rem] text-slate-500 font-bold font-tech">X</span>
           <input type="range" min="10" max="90" value="${offset.x}" oninput="updateRackCoordinate('${rId}', 'x', this.value)" class="flex-1 accent-blue-500 bg-slate-900 h-1 rounded-lg cursor-pointer">
         </div>
         <div class="flex items-center space-x-1.5">
-          <span class="text-[8px] text-slate-500 font-bold font-tech">Y</span>
+          <span class="text-[0.5rem] text-slate-500 font-bold font-tech">Y</span>
           <input type="range" min="10" max="90" value="${offset.y}" oninput="updateRackCoordinate('${rId}', 'y', this.value)" class="flex-1 accent-blue-500 bg-slate-900 h-1 rounded-lg cursor-pointer">
         </div>
       </div>
@@ -962,7 +969,7 @@ function renderAdminSteppers() {
 
   sportsInventory.forEach(item => {
     const row = document.createElement("div");
-    row.className = "flex items-center justify-between bg-slate-950/40 border border-slate-800/80 p-2 rounded-xl text-[11px] space-x-2";
+    row.className = "flex items-center justify-between bg-slate-950/40 border border-slate-800/80 p-2 rounded-xl text-[0.6875rem] space-x-2";
 
     const badgeColors = {
       '수업소도구': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -977,7 +984,7 @@ function renderAdminSteppers() {
 
     row.innerHTML = `
       <div class="flex items-center space-x-1.5 flex-1 min-w-0">
-        <span class="text-[8px] font-bold px-1 py-0.25 rounded border ${badge} whitespace-nowrap">${item.category}</span>
+        <span class="text-[0.5rem] font-bold px-1 py-0.25 rounded border ${badge} whitespace-nowrap">${item.category}</span>
         <span class="font-semibold text-slate-300 truncate">${item.name}</span>
       </div>
       
@@ -985,7 +992,7 @@ function renderAdminSteppers() {
       <div class="flex items-center space-x-1.5 flex-shrink-0">
         <button onclick="adjustItemQty(${item.id}, -1)" class="w-6 h-6 bg-slate-800 border border-slate-700 hover:border-red-500/40 text-slate-300 hover:text-red-400 font-extrabold rounded-md flex items-center justify-center transition-colors active:scale-90">-</button>
         <input type="number" value="${item.qty}" min="0" onchange="setItemQty(${item.id}, this.value)" 
-          class="w-8 py-0.5 text-center bg-slate-900 border border-slate-700 rounded-md text-white font-bold font-tech text-[10px] focus:outline-none focus:border-blue-500">
+          class="w-8 py-0.5 text-center bg-slate-900 border border-slate-700 rounded-md text-white font-bold font-tech text-[0.625rem] focus:outline-none focus:border-blue-500">
         <button onclick="adjustItemQty(${item.id}, 1)" class="w-6 h-6 bg-slate-800 border border-slate-700 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 font-extrabold rounded-md flex items-center justify-center transition-colors active:scale-90">+</button>
       </div>
     `;
@@ -1469,12 +1476,12 @@ function renderInventoryList() {
 
     itemRow.innerHTML = `
       <div class="flex items-center space-x-2 flex-1 min-w-0">
-        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeClass} whitespace-nowrap flex-shrink-0">${item.category}</span>
+        <span class="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded border ${badgeClass} whitespace-nowrap flex-shrink-0">${item.category}</span>
         <span class="font-semibold text-slate-200 truncate">${item.name}</span>
       </div>
       <div class="flex items-center space-x-2.5 flex-shrink-0">
-        <span class="text-[9px] text-slate-500">${rackName}</span>
-        <span class="font-extrabold text-blue-400 font-tech text-[11px] bg-slate-900 px-2 py-0.5 rounded-lg">${item.qty}개</span>
+        <span class="text-[0.5625rem] text-slate-500">${rackName}</span>
+        <span class="font-extrabold text-blue-400 font-tech text-[0.6875rem] bg-slate-900 px-2 py-0.5 rounded-lg">${item.qty}개</span>
       </div>
     `;
     container.appendChild(itemRow);
@@ -1867,11 +1874,11 @@ function switchViewMode(mode) {
 
   if (btn3D && btn2D) {
     if (mode === '3d') {
-      btn3D.className = "px-2.5 py-1.5 text-[9px] font-black rounded-lg transition-all flex items-center space-x-1 bg-slate-800 text-blue-400 border border-blue-500/20 shadow-sm";
-      btn2D.className = "px-2.5 py-1.5 text-[9px] font-bold rounded-lg transition-all flex items-center space-x-1 text-slate-400 hover:text-white";
+      btn3D.className = "px-2.5 py-1.5 text-[0.5625rem] font-black rounded-lg transition-all flex items-center space-x-1 bg-slate-800 text-blue-400 border border-blue-500/20 shadow-sm";
+      btn2D.className = "px-2.5 py-1.5 text-[0.5625rem] font-bold rounded-lg transition-all flex items-center space-x-1 text-slate-400 hover:text-white";
     } else {
-      btn2D.className = "px-2.5 py-1.5 text-[9px] font-black rounded-lg transition-all flex items-center space-x-1 bg-slate-800 text-blue-400 border border-blue-500/20 shadow-sm";
-      btn3D.className = "px-2.5 py-1.5 text-[9px] font-bold rounded-lg transition-all flex items-center space-x-1 text-slate-400 hover:text-white";
+      btn2D.className = "px-2.5 py-1.5 text-[0.5625rem] font-black rounded-lg transition-all flex items-center space-x-1 bg-slate-800 text-blue-400 border border-blue-500/20 shadow-sm";
+      btn3D.className = "px-2.5 py-1.5 text-[0.5625rem] font-bold rounded-lg transition-all flex items-center space-x-1 text-slate-400 hover:text-white";
     }
   }
 
@@ -1982,7 +1989,18 @@ function applyFontScale() {
   
   const trigger = document.getElementById("font-scale-trigger");
   if (trigger) {
-    trigger.innerHTML = `<span class="text-[11px] font-extrabold font-sans">A<sup>${fontScale === 1.0 ? '⁺' : fontScale === 1.15 ? '1.15' : '1.3'}</sup></span>`;
+    let scaleLabel = "";
+    if (fontScale === 1.15) scaleLabel = "1.15x";
+    else if (fontScale === 1.3) scaleLabel = "1.30x";
+    else scaleLabel = "기본";
+    
+    trigger.innerHTML = `
+      <i data-lucide="type" class="w-3.5 h-3.5 ${fontScale !== 1.0 ? 'text-blue-400' : ''}"></i>
+      <span class="text-[0.625rem] font-bold whitespace-nowrap">큰 글씨 (${scaleLabel})</span>
+    `;
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
   }
 }
 
@@ -2000,7 +2018,7 @@ function toggleFontScale() {
   } catch (e) {}
   
   applyFontScale();
-  showToast(`글자 크기가 ${fontScale}배로 설정되었습니다.`);
+  showToast(`글자 크기가 ${fontScale === 1.0 ? '기본(1배)' : fontScale + '배'}로 설정되었습니다.`);
 }
 
 /* ==========================================================================
@@ -2224,7 +2242,7 @@ function updateLiveSchedule() {
         statusBadgeHtml = `<span class="bg-slate-850/50 px-1 rounded text-slate-600">완료</span>`;
         rowClass += "text-slate-500 opacity-40";
       } else if (currentMinutes >= startMin && currentMinutes <= endMin && !isBreakTime) {
-        statusBadgeHtml = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold animate-pulse text-[9px]">진행</span>`;
+        statusBadgeHtml = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold animate-pulse text-[0.5625rem]">진행</span>`;
         rowClass += "bg-blue-500/10 border-y border-blue-500/30 text-blue-400 font-semibold";
       } else {
         statusBadgeHtml = `<span class="bg-slate-800 text-slate-400 px-1 rounded">대기</span>`;
