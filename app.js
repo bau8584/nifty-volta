@@ -19,6 +19,18 @@ let rackNames = {};
 let rackSizes = {};
 let RACK_MAPPING = {}; // Dynamic highlights & descriptions
 
+// Font Scale & Schedule Globals
+let fontScale = 1.0;
+let gymSchedule = [];
+const DEFAULT_SCHEDULE = [
+  { period: "1교시", start: "09:00", end: "09:40", days: { "월요일": "6-10/1학년", "화요일": "5-3", "수요일": "6-2/2-1", "목요일": "5-1/1-2", "금요일": "6-4/3-2" } },
+  { period: "2교시", start: "09:50", end: "10:30", days: { "월요일": "4-2", "화요일": "4-2", "수요일": "4-1/3-1", "목요일": "6-4/4-1", "금요일": "5-4/4-3" } },
+  { period: "3교시", start: "10:40", end: "11:20", days: { "월요일": "6-1", "화요일": "6-1", "수요일": "5-2/4-2", "목요일": "6-3/4-4", "금요일": "5-2/3-3" } },
+  { period: "4교시", start: "11:30", end: "12:10", days: { "월요일": "3-1", "화요일": "3-1", "수요일": "6-5/2-3", "목요일": "5-3/1-3", "금요일": "6-3/2-1" } },
+  { period: "5교시", start: "13:10", end: "13:50", days: { "월요일": "5-1", "화요일": "5-1", "수요일": "6-1/1-4", "목요일": "6-2/3-2", "금요일": "5-1/3-4" } },
+  { period: "6교시", start: "14:00", end: "14:40", days: { "월요일": "6-2", "화요일": "공석", "수요일": "공석", "목요일": "4-3/4-2", "금요일": "공석" } }
+];
+
 // Default Sports Gear Inventory Database (Real 청림초등학교 89 items parsed from user sheet)
 let sportsInventory = [];
 const DEFAULT_INVENTORY = [
@@ -121,6 +133,10 @@ const HANGUL_CHOSUNG = [
 
 // Initialize UI & State on DOM Load
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize Font Scale & Schedule first
+  initializeFontScale();
+  initializeSchedule();
+
   if (typeof lucide !== 'undefined') {
     lucide.createIcons();
   }
@@ -1056,6 +1072,25 @@ async function fetchLayoutTab(sheetId) {
   return null;
 }
 
+async function fetchScheduleTab(sheetId) {
+  const candidates = ['체육관 시간표', '체육관시간표', '시간표', 'schedule', 'timetable', '시트3', 'Sheet3'];
+  for (const name of candidates) {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.trim().length > 0 && (text.includes("교시") || text.includes("시간") || text.includes("요일"))) {
+          return text;
+        }
+      }
+    } catch (e) {
+      console.warn(`Failed schedule fetch for candidate: ${name}`, e);
+    }
+  }
+  return null;
+}
+
 async function syncGoogleSheets() {
   const sheetIdInput = document.getElementById("sheet-id-input");
   if (!sheetIdInput) return;
@@ -1079,9 +1114,29 @@ async function syncGoogleSheets() {
     // 2. Fetch Layout Map grid (Tab 2) using sequential candidates starting with '물품 보관 장소'
     const csvData2 = await fetchLayoutTab(sheetId);
     
-    // 3. Process Sync
+    // 3. Fetch Gym Schedule (Tab 3) using sequential candidates starting with '체육관 시간표'
+    let csvData3 = null;
+    try {
+      csvData3 = await fetchScheduleTab(sheetId);
+    } catch (e) {
+      console.warn("Gym schedule tab fetch failed", e);
+    }
+
+    // 4. Process Sync
     const count = parseCSVAndSync(csvData1, csvData2);
     
+    // 5. Sync schedule if available
+    if (csvData3) {
+      const parsedSched = parseScheduleCSV(csvData3);
+      if (parsedSched && parsedSched.length > 0) {
+        gymSchedule = parsedSched;
+        try {
+          localStorage.setItem('gym_schedule', JSON.stringify(gymSchedule));
+        } catch (e) {}
+        updateLiveSchedule();
+      }
+    }
+
     // Save Spreadsheet ID for automatic background syncing on next load
     try {
       localStorage.setItem('google_sheet_id', sheetId);
@@ -1114,6 +1169,13 @@ async function syncGoogleSheets() {
       localStorage.setItem('rack_offsets', JSON.stringify(rackOffsets));
       localStorage.setItem('rack_sizes', JSON.stringify(rackSizes));
       
+      // Fallback schedule
+      gymSchedule = DEFAULT_SCHEDULE;
+      try {
+        localStorage.setItem('gym_schedule', JSON.stringify(gymSchedule));
+      } catch (e) {}
+      updateLiveSchedule();
+
       rebuildRackMapping();
       renderWarehouseMap();
       renderInventoryList();
@@ -1889,5 +1951,297 @@ function setupMapPanning() {
   viewport.addEventListener("touchend", () => {
     isPanning = false;
   }, { passive: true });
+}
+
+/* ==========================================================================
+   Accessibility Root Font Scaling Logic
+   ========================================================================== */
+function initializeFontScale() {
+  try {
+    const cachedScale = localStorage.getItem('font_scale');
+    if (cachedScale) {
+      fontScale = parseFloat(cachedScale);
+    } else {
+      fontScale = 1.0;
+    }
+  } catch (e) {
+    fontScale = 1.0;
+  }
+  applyFontScale();
+}
+
+function applyFontScale() {
+  const html = document.documentElement;
+  if (fontScale === 1.15) {
+    html.style.fontSize = '115%';
+  } else if (fontScale === 1.3) {
+    html.style.fontSize = '130%';
+  } else {
+    html.style.fontSize = '100%';
+  }
+  
+  const trigger = document.getElementById("font-scale-trigger");
+  if (trigger) {
+    trigger.innerHTML = `<span class="text-[11px] font-extrabold font-sans">A<sup>${fontScale === 1.0 ? '⁺' : fontScale === 1.15 ? '1.15' : '1.3'}</sup></span>`;
+  }
+}
+
+function toggleFontScale() {
+  if (fontScale === 1.0) {
+    fontScale = 1.15;
+  } else if (fontScale === 1.15) {
+    fontScale = 1.3;
+  } else {
+    fontScale = 1.0;
+  }
+  
+  try {
+    localStorage.setItem('font_scale', fontScale.toString());
+  } catch (e) {}
+  
+  applyFontScale();
+  showToast(`글자 크기가 ${fontScale}배로 설정되었습니다.`);
+}
+
+/* ==========================================================================
+   Weekly Gym Schedule Synchronization & Real-time Live Calculations
+   ========================================================================== */
+function initializeSchedule() {
+  try {
+    const cachedSched = localStorage.getItem('gym_schedule');
+    if (cachedSched) {
+      gymSchedule = JSON.parse(cachedSched);
+    } else {
+      gymSchedule = DEFAULT_SCHEDULE;
+      localStorage.setItem('gym_schedule', JSON.stringify(DEFAULT_SCHEDULE));
+    }
+  } catch (e) {
+    gymSchedule = DEFAULT_SCHEDULE;
+  }
+  
+  updateLiveSchedule();
+  // Poll time matching every 10 seconds for high-precision real-time response!
+  setInterval(updateLiveSchedule, 10000);
+}
+
+function parseScheduleCSV(csvText) {
+  try {
+    const rows = parseCSV(csvText);
+    let headerRowIdx = -1;
+    for (let i = 0; i < rows.length; i++) {
+      const trimmedRow = rows[i].map(c => c.trim().replace(/^"|"$/g, ''));
+      if (trimmedRow.includes("교시") || trimmedRow.includes("시작시간") || trimmedRow.some(c => c.includes("요일"))) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+    
+    if (headerRowIdx === -1) headerRowIdx = 0;
+    
+    const headersRow = rows[headerRowIdx].map(h => h.trim().replace(/^"|"$/g, ''));
+    const idxPeriod = headersRow.findIndex(h => h.includes('교시') || h.toLowerCase() === 'period');
+    const idxStart = headersRow.findIndex(h => h.includes('시작') || h.toLowerCase() === 'start');
+    const idxEnd = headersRow.findIndex(h => h.includes('종료') || h.toLowerCase() === 'end');
+    const idxMon = headersRow.findIndex(h => h.includes('월'));
+    const idxTue = headersRow.findIndex(h => h.includes('화'));
+    const idxWed = headersRow.findIndex(h => h.includes('수'));
+    const idxThu = headersRow.findIndex(h => h.includes('목'));
+    const idxFri = headersRow.findIndex(h => h.includes('금'));
+
+    const parsedSchedule = [];
+    for (let i = headerRowIdx + 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 3) continue;
+      
+      const period = (idxPeriod !== -1 && row[idxPeriod] !== undefined) ? row[idxPeriod].trim().replace(/^"|"$/g, '') : "";
+      const start = (idxStart !== -1 && row[idxStart] !== undefined) ? row[idxStart].trim().replace(/^"|"$/g, '') : "";
+      const end = (idxEnd !== -1 && row[idxEnd] !== undefined) ? row[idxEnd].trim().replace(/^"|"$/g, '') : "";
+      
+      if (!period || period === "") continue;
+
+      const days = {};
+      days["월요일"] = (idxMon !== -1 && row[idxMon]) ? row[idxMon].trim().replace(/^"|"$/g, '') : "공석";
+      days["화요일"] = (idxTue !== -1 && row[idxTue]) ? row[idxTue].trim().replace(/^"|"$/g, '') : "공석";
+      days["수요일"] = (idxWed !== -1 && row[idxWed]) ? row[idxWed].trim().replace(/^"|"$/g, '') : "공석";
+      days["목요일"] = (idxThu !== -1 && row[idxThu]) ? row[idxThu].trim().replace(/^"|"$/g, '') : "공석";
+      days["금요일"] = (idxFri !== -1 && row[idxFri]) ? row[idxFri].trim().replace(/^"|"$/g, '') : "공석";
+
+      parsedSchedule.push({
+        period,
+        start,
+        end,
+        days
+      });
+    }
+    return parsedSchedule;
+  } catch (err) {
+    console.error("Failed to parse schedule CSV", err);
+    return null;
+  }
+}
+
+function parseTimeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  const cleaned = timeStr.trim().replace(/^"|"$/g, '');
+  const parts = cleaned.split(":");
+  if (parts.length < 2) return 0;
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  return hours * 60 + minutes;
+}
+
+function updateLiveSchedule() {
+  const statusText = document.getElementById("gym-status-text");
+  const statusDot = document.getElementById("gym-status-dot");
+  const statusPing = document.getElementById("gym-status-ping");
+  const statusBadge = document.getElementById("gym-status-badge");
+
+  const timetableContainer = document.getElementById("timetable-rows-container");
+  const timetableInfo = document.getElementById("today-timetable-info");
+
+  if (!gymSchedule || gymSchedule.length === 0) return;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const daysOfWeek = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+  const currentDay = daysOfWeek[now.getDay()];
+
+  let activePeriod = null;
+  let activeClass = "공석";
+  let isBreakTime = false;
+  let breakPeriodName = "";
+
+  // 1. Determine active period or break time
+  if (currentDay !== '일요일' && currentDay !== '토요일') {
+    const sortedSchedule = [...gymSchedule].sort((a, b) => parseTimeToMinutes(a.start) - parseTimeToMinutes(b.start));
+    
+    for (let i = 0; i < sortedSchedule.length; i++) {
+      const p = sortedSchedule[i];
+      const startMin = parseTimeToMinutes(p.start);
+      const endMin = parseTimeToMinutes(p.end);
+
+      if (currentMinutes >= startMin && currentMinutes <= endMin) {
+        activePeriod = p;
+        activeClass = p.days[currentDay] || "공석";
+        break;
+      }
+      
+      if (i < sortedSchedule.length - 1) {
+        const nextP = sortedSchedule[i + 1];
+        const nextStartMin = parseTimeToMinutes(nextP.start);
+        if (currentMinutes > endMin && currentMinutes < nextStartMin) {
+          isBreakTime = true;
+          breakPeriodName = `${p.period} 쉬는시간`;
+          activePeriod = nextP;
+          activeClass = "쉬는시간";
+          break;
+        }
+      }
+    }
+  }
+
+  // 2. Update Header Occupancy Status Indicator
+  if (statusText && statusDot && statusPing && statusBadge) {
+    if (currentDay === '일요일' || currentDay === '토요일') {
+      statusText.textContent = "⚪ 주말: 체육관 공석";
+      statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-slate-400 status-pulse";
+      statusPing.className = "absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-0";
+      statusBadge.className = "flex items-center space-x-2 bg-slate-500/10 border border-slate-500/20 px-2.5 py-1 rounded-full";
+    } else if (isBreakTime) {
+      statusText.textContent = `🟡 쉬는시간: 환기 및 대기`;
+      statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-amber-500 status-pulse";
+      statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75";
+      statusBadge.className = "flex items-center space-x-2 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full";
+    } else if (activePeriod) {
+      if (!activeClass || activeClass === "공석" || activeClass === "없음" || activeClass.trim() === "") {
+        statusText.textContent = `⚪ ${activePeriod.period}: 체육관 공석`;
+        statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-slate-400 status-pulse";
+        statusPing.className = "absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-0";
+        statusBadge.className = "flex items-center space-x-2 bg-slate-500/10 border border-slate-500/20 px-2.5 py-1 rounded-full";
+      } else {
+        statusText.textContent = `🟢 ${activePeriod.period}: ${activeClass} 수업 중`;
+        statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-500 status-pulse";
+        statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75";
+        statusBadge.className = "flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full";
+      }
+    } else {
+      statusText.textContent = "⚪ 방과 후: 체육관 공석";
+      statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-slate-400 status-pulse";
+      statusPing.className = "absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-0";
+      statusBadge.className = "flex items-center space-x-2 bg-slate-500/10 border border-slate-500/20 px-2.5 py-1 rounded-full";
+    }
+  }
+
+  // 3. Update Dynamic Guide Tab Timetable Grid Accordion
+  if (timetableInfo) {
+    const formattedDate = now.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+    if (currentDay === '일요일' || currentDay === '토요일') {
+      timetableInfo.innerHTML = `
+        <span>오늘: ${currentDay} (${formattedDate})</span>
+        <span class="text-slate-400 font-semibold">• 주말 체육관 미운영</span>
+      `;
+    } else if (activePeriod && activeClass !== "공석" && activeClass !== "쉬는시간") {
+      timetableInfo.innerHTML = `
+        <span>오늘: ${currentDay} (${formattedDate})</span>
+        <span class="text-emerald-400 font-semibold">• ${activePeriod.period} 진행 중</span>
+      `;
+    } else if (isBreakTime) {
+      timetableInfo.innerHTML = `
+        <span>오늘: ${currentDay} (${formattedDate})</span>
+        <span class="text-amber-400 font-semibold">• 쉬는시간 진행 중</span>
+      `;
+    } else {
+      timetableInfo.innerHTML = `
+        <span>오늘: ${currentDay} (${formattedDate})</span>
+        <span class="text-slate-400 font-semibold">• 예정된 수업 없음</span>
+      `;
+    }
+  }
+
+  if (timetableContainer) {
+    timetableContainer.innerHTML = "";
+    
+    if (currentDay === '일요일' || currentDay === '토요일') {
+      timetableContainer.innerHTML = `
+        <div class="py-6 text-center text-slate-500 font-medium select-none">
+          주말에는 정규 체육관 사용 시간표가 없습니다.
+        </div>
+      `;
+      return;
+    }
+
+    const sortedSchedule = [...gymSchedule].sort((a, b) => parseTimeToMinutes(a.start) - parseTimeToMinutes(b.start));
+
+    sortedSchedule.forEach(p => {
+      const startMin = parseTimeToMinutes(p.start);
+      const endMin = parseTimeToMinutes(p.end);
+      const cls = p.days[currentDay] || "공석";
+      
+      let statusBadgeHtml = "";
+      let rowClass = "grid grid-cols-6 py-2 text-center items-center ";
+
+      if (currentMinutes > endMin) {
+        statusBadgeHtml = `<span class="bg-slate-850/50 px-1 rounded text-slate-600">완료</span>`;
+        rowClass += "text-slate-500 opacity-40";
+      } else if (currentMinutes >= startMin && currentMinutes <= endMin && !isBreakTime) {
+        statusBadgeHtml = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold animate-pulse text-[9px]">진행</span>`;
+        rowClass += "bg-blue-500/10 border-y border-blue-500/30 text-blue-400 font-semibold";
+      } else {
+        statusBadgeHtml = `<span class="bg-slate-800 text-slate-400 px-1 rounded">대기</span>`;
+        rowClass += "text-slate-400";
+      }
+
+      const displayClass = (cls === "공석" || cls.trim() === "") ? "-" : cls;
+
+      timetableContainer.innerHTML += `
+        <div class="${rowClass}">
+          <div class="col-span-1 font-tech">${p.period}</div>
+          <div class="col-span-2 font-tech text-slate-400">${p.start} - ${p.end}</div>
+          <div class="col-span-2 font-medium truncate px-1">${displayClass}</div>
+          <div class="col-span-1">${statusBadgeHtml}</div>
+        </div>
+      `;
+    });
+  }
 }
 
