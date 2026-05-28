@@ -774,6 +774,21 @@ function initializeWarehouseLayout() {
       rackNames = JSON.parse(cachedNames);
       rackOffsets = JSON.parse(cachedOffsets);
       rackSizes = cachedSizes ? JSON.parse(cachedSizes) : {};
+      
+      // Self-healing Cache-buster: If the loaded cache contains old unmapped shelves like '1학년 연구실',
+      // it means the cache was contaminated by the old buggy parser. Let's force-clear it!
+      const containsContaminated = Object.values(rackNames).some(name => 
+        name.includes("1학년") || name.includes("천장") || name.includes("무대 아래") || name.includes("연구실")
+      );
+      if (containsContaminated) {
+        localStorage.removeItem('sports_inventory');
+        localStorage.removeItem('rack_names');
+        localStorage.removeItem('rack_offsets');
+        localStorage.removeItem('rack_sizes');
+        localStorage.removeItem('google_sheet_id');
+        window.location.reload();
+        return;
+      }
     } else {
       // Initialize default 6-shelf layout matching user's real sheet
       rackNames = {
