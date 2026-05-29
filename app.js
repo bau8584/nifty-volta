@@ -1,3 +1,11 @@
+/* ==========================================================================
+   스마트 체육관 대시보드 - 글로벌 공유 연동 기본값 설정
+   (여기에 본인의 스프레드시트 ID와 Apps Script URL을 기본값으로 적어두면, 
+   대시보드를 실행하는 모든 디바이스/사용자 컴퓨터에 공통으로 기본 연동됩니다!)
+   ========================================================================== */
+const GLOBAL_SHEET_ID = "1cTqfUAxrHxdt7hso08SLnZbblBcHhtSTRU1iN3FTFnM"; // 기본 스프레드시트 ID
+const GLOBAL_SCRIPT_URL = ""; //여기에 구글 Apps Script Web App URL을 적어두세요! (예: https://script.google.com/macros/s/...)
+
 // Global state variables
 let currentTab = 'guide';
 let touchStartX = 0;
@@ -196,14 +204,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Proactively trigger auto-sync on load using saved ID or default input ID to ensure live freshness!
   try {
     const sheetIdInput = document.getElementById("sheet-id-input");
-    const savedSheetId = localStorage.getItem('google_sheet_id');
+    const savedSheetId = localStorage.getItem('google_sheet_id') || GLOBAL_SHEET_ID;
     
     if (savedSheetId && sheetIdInput) {
       sheetIdInput.value = savedSheetId;
     }
 
     const scriptUrlInput = document.getElementById("script-url-input");
-    const savedScriptUrl = localStorage.getItem('google_script_url');
+    const savedScriptUrl = localStorage.getItem('google_script_url') || GLOBAL_SCRIPT_URL;
     if (savedScriptUrl && scriptUrlInput) {
       scriptUrlInput.value = savedScriptUrl;
     }
@@ -1743,7 +1751,7 @@ function handleFormSubmit(event, type) {
 
   // Sync with Google Sheets Apps Script Web API if configured!
   try {
-    const scriptUrl = localStorage.getItem('google_script_url');
+    const scriptUrl = localStorage.getItem('google_script_url') || GLOBAL_SCRIPT_URL;
     if (scriptUrl) {
       const newestReq = adminRequests[0];
       if (newestReq) {
