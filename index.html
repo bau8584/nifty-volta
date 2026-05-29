@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>체육관 스마트 대시보드 | 청림초등학교</title>
   
+  <!-- OpenGraph Metadata -->
+  <meta property="og:title" content="체육관 스마트 대시보드 | 청림초등학교">
+  <meta property="og:description" content="체육창고 교구 관리, 2.5D 입체 보관지도 및 실시간 체육관 사용 시간표 대시보드">
+  <meta property="og:image" content="assets/og_preview.png">
+  <meta property="og:url" content="https://bau8584.github.io/nifty-volta/">
+  <meta property="og:type" content="website">
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -112,7 +119,7 @@
       <!-- ==================== CATEGORY 1: SMART GUIDE ==================== -->
       <div id="panel-guide" class="tab-panel w-full space-y-4">
         <!-- Passwords Action Cards Grid (PC: 4 Columns Wide) -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4.5">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
           <!-- Gym Class Status Card (Takes full width on mobile, 2 columns on PC) -->
           <div id="gym-status-card" class="col-span-2 bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 flex items-center justify-between transition-all duration-300">
             <div class="flex items-center space-x-3 flex-1 min-w-0">
@@ -362,7 +369,7 @@
 
       <!-- ==================== CATEGORY 2: GEAR LOCATOR ==================== -->
       <div id="panel-locator" class="tab-panel w-full hidden">
-        <div class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-5.5">
+        <div class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8">
 
         <!-- 1. Interactive 2.5D Warehouse Floor Plan Map Section -->
         <div class="bg-slate-800/60 rounded-3xl p-4 border border-slate-700/50 space-y-4">
@@ -529,7 +536,7 @@
 
       <!-- ==================== CATEGORY 3: ADMIN CENTER ==================== -->
       <div id="panel-admin" class="tab-panel w-full hidden">
-        <div class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-5.5">
+        <div class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-8">
         <!-- Left Column: Forms (Occupies 5 columns on PC) -->
         <div class="lg:col-span-5 space-y-4 flex flex-col justify-start">
           <!-- Form 1: Breakage -->
@@ -696,6 +703,6 @@
   </main>
 
   <!-- Script logic -->
-  <script src="app.js?v=4.4"></script>
+  <script src="app.js?v=4.5"></script>
 </body>
 </html>
