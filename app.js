@@ -34,32 +34,7 @@ let isAdminMode = false;
 let adminRequests = [];
 let expandedRequestIds = new Set();
 
-const DEFAULT_REQUESTS = [
-  {
-    id: 1,
-    type: 'repair',
-    author: '박준영 (6학년)',
-    item: '피구공 바람 빠짐',
-    desc: '피구공 2개가 바람 주입구 파손으로 공기가 계속 빠집니다.',
-    status: 'pending',
-    hidden: false,
-    date: '2026-05-28 10:30',
-    replies: [
-      { author: '체육부장 (관리자)', content: '글리세린 주입하여 밸브 점검 후 신규 교체 조치하겠습니다.', date: '2026-05-28 11:15' }
-    ]
-  },
-  {
-    id: 2,
-    type: 'wish',
-    author: '김지은 (3학년)',
-    item: '안전 피구공 10개',
-    desc: '저학년 피구 수업 시 부상 방지를 위해 스펀지 재질의 안전 공이 추가로 필요합니다.',
-    status: 'completed',
-    hidden: false,
-    date: '2026-05-27 14:20',
-    replies: []
-  }
-];
+const DEFAULT_REQUESTS = [];
 const DEFAULT_SCHEDULE = [
   { period: "1교시", start: "09:00", end: "09:40", days: { "월요일": "6-10/1학년", "화요일": "5-3", "수요일": "6-2/2-1", "목요일": "5-1/1-2", "금요일": "6-4/3-2" } },
   { period: "2교시", start: "09:50", end: "10:30", days: { "월요일": "4-2", "화요일": "4-2", "수요일": "4-1/3-1", "목요일": "6-4/4-1", "금요일": "5-4/4-3" } },
@@ -881,6 +856,14 @@ function initializeWarehouseLayout() {
     const cachedRequests = localStorage.getItem('admin_requests');
     if (cachedRequests) {
       adminRequests = JSON.parse(cachedRequests);
+      // Clean up legacy mock requests from local cache if any
+      adminRequests = adminRequests.filter(r => 
+        r && r.item && 
+        !r.item.includes("피구공") && 
+        !r.item.includes("야구 티볼") && 
+        !r.item.includes("예시")
+      );
+      localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
     } else {
       adminRequests = DEFAULT_REQUESTS;
       localStorage.setItem('admin_requests', JSON.stringify(DEFAULT_REQUESTS));
@@ -889,6 +872,9 @@ function initializeWarehouseLayout() {
     adminRequests = DEFAULT_REQUESTS;
   }
   renderAdminRequests();
+  
+  // Fetch latest requests directly from the Google Sheet tab in the background!
+  syncAdminRequestsFromGoogleSheets();
 }
 
 function rebuildRackMapping() {
@@ -1172,6 +1158,112 @@ function saveScriptUrl() {
   }
 }
 
+async function syncAdminRequestsFromGoogleSheets() {
+  const sheetId = localStorage.getItem('google_sheet_id') || GLOBAL_SHEET_ID;
+  if (!sheetId) return;
+
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("행정 지원")}`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return;
+
+    const csvText = await response.text();
+    const rows = parseCSV(csvText);
+    if (!rows || rows.length <= 1) return; // empty or only headers
+
+    const parsedRequestsMap = {};
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i].map(c => c.trim().replace(/^"|"$/g, ''));
+      if (row.length < 7) continue;
+
+      const id = parseInt(row[0], 10);
+      const date = row[1];
+      const typeLabel = row[2];
+      const author = row[3];
+      const item = row[4];
+      const desc = row[5];
+      const statusLabel = row[6];
+      const hiddenLabel = row[7];
+      const repliesText = row[8] || "";
+
+      const type = typeLabel.includes("정비") ? "repair" : "wish";
+      const status = statusLabel.includes("완료") ? "completed" : "pending";
+      const hidden = hiddenLabel === "숨김";
+
+      const replies = [];
+      if (repliesText.trim().length > 0) {
+        const lines = repliesText.split("\n");
+        lines.forEach(line => {
+          const match = line.match(/^\[(.*?)\]\s*(.*?):\s*(.*)$/);
+          if (match) {
+            replies.push({
+              date: match[1],
+              author: match[2],
+              content: match[3]
+            });
+          } else {
+            const parts = line.split(":");
+            if (parts.length >= 2) {
+              replies.push({
+                date: "",
+                author: parts[0].trim(),
+                content: parts.slice(1).join(":").trim()
+              });
+            }
+          }
+        });
+      }
+
+      // Filter out mock examples on-the-fly when parsing from the sheet
+      if (item && (item.includes("피구공") || item.includes("야구 티볼") || item.includes("예시"))) {
+        continue;
+      }
+
+      // Keep only the latest entry with the same ID for robust deduplication across devices
+      parsedRequestsMap[id] = {
+        id,
+        type,
+        author,
+        item,
+        desc,
+        status,
+        hidden,
+        date,
+        replies
+      };
+    }
+
+    const parsedRequests = Object.values(parsedRequestsMap);
+    parsedRequests.sort((a, b) => b.id - a.id);
+    adminRequests = parsedRequests;
+    
+    try {
+      localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
+    } catch (e) {}
+    renderAdminRequests();
+  } catch (err) {
+    console.warn("Failed to fetch admin requests from Google Sheets", err);
+  }
+}
+
+function pushRequestUpdateToSheet(req) {
+  try {
+    const scriptUrl = localStorage.getItem('google_script_url') || GLOBAL_SCRIPT_URL;
+    if (scriptUrl && req) {
+      fetch(scriptUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req)
+      })
+      .then(() => console.log("Request update synced successfully to Google Sheets!"))
+      .catch(err => console.error("Google Sheets update failed", err));
+    }
+  } catch (e) {
+    console.error("Fetch update trigger error", e);
+  }
+}
+
 async function syncGoogleSheets() {
   const sheetIdInput = document.getElementById("sheet-id-input");
   if (!sheetIdInput) return;
@@ -1222,6 +1314,9 @@ async function syncGoogleSheets() {
     try {
       localStorage.setItem('google_sheet_id', sheetId);
     } catch (err) {}
+
+    // Silently fetch and sync requests timeline tab!
+    syncAdminRequestsFromGoogleSheets();
 
     setTimeout(() => {
       syncIcon.classList.remove("animate-spin");
@@ -2287,6 +2382,9 @@ function addAdminReply(requestId) {
       localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
     } catch (e) {}
     
+    // Sync update to Google Sheets Apps Script!
+    pushRequestUpdateToSheet(req);
+    
     inputEl.value = "";
     renderAdminRequests();
     showToast("관리자 코멘트 답변이 성공적으로 등록되었습니다!");
@@ -2300,6 +2398,10 @@ function toggleRequestStatus(requestId) {
     try {
       localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
     } catch (e) {}
+    
+    // Sync update to Google Sheets Apps Script!
+    pushRequestUpdateToSheet(req);
+    
     renderAdminRequests();
     showToast(`요청 상태가 ${req.status === 'completed' ? '처리 완료' : '처리 대기'} 상태로 전환되었습니다.`);
   }
@@ -2312,6 +2414,10 @@ function toggleRequestVisibility(requestId) {
     try {
       localStorage.setItem('admin_requests', JSON.stringify(adminRequests));
     } catch (e) {}
+    
+    // Sync update to Google Sheets Apps Script!
+    pushRequestUpdateToSheet(req);
+    
     renderAdminRequests();
     showToast(`해당 요청이 일반 사용자에게 ${req.hidden ? '숨김' : '공개'} 처리되었습니다.`);
   }
