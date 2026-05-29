@@ -875,6 +875,9 @@ function initializeWarehouseLayout() {
   
   // Fetch latest requests directly from the Google Sheet tab in the background!
   syncAdminRequestsFromGoogleSheets();
+
+  // Keep all devices synchronized in real-time by polling Google Sheets every 30 seconds
+  setInterval(syncAdminRequestsFromGoogleSheets, 30000);
 }
 
 function rebuildRackMapping() {
@@ -1084,7 +1087,8 @@ function saveInventoryDatabase() {
 async function fetchInventoryTab(sheetId) {
   const candidates = ['물품 장부', '물품장부', '장부', '시트1', 'Sheet1', '교구목록', 'inventory'];
   for (const name of candidates) {
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+    // Add cache buster to bypass Google viz/tq CDN cache and fetch real-time fresh data
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}&tq=SELECT%20*%20&_=${Date.now()}`;
     try {
       const response = await fetch(url);
       if (response.ok) {
@@ -1098,8 +1102,8 @@ async function fetchInventoryTab(sheetId) {
     }
   }
   
-  // Default export fallback
-  const fallbackUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+  // Default export fallback with cache buster
+  const fallbackUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&_=${Date.now()}`;
   const response = await fetch(fallbackUrl);
   if (response.ok) {
     return await response.text();
@@ -1110,7 +1114,8 @@ async function fetchInventoryTab(sheetId) {
 async function fetchLayoutTab(sheetId) {
   const candidates = ['물품 보관 장소', '물품보관장소', '보관장소', '시트2', 'Sheet2', '창고배치', '약도', '물품약도'];
   for (const name of candidates) {
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+    // Add cache buster to bypass Google viz/tq CDN cache and fetch real-time fresh data
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}&tq=SELECT%20*%20&_=${Date.now()}`;
     try {
       const response = await fetch(url);
       if (response.ok) {
@@ -1129,7 +1134,8 @@ async function fetchLayoutTab(sheetId) {
 async function fetchScheduleTab(sheetId) {
   const candidates = ['체육관 시간표', '체육관시간표', '시간표', 'schedule', 'timetable', '시트3', 'Sheet3'];
   for (const name of candidates) {
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+    // Add cache buster to bypass Google viz/tq CDN cache and fetch real-time fresh data
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}&tq=SELECT%20*%20&_=${Date.now()}`;
     try {
       const response = await fetch(url);
       if (response.ok) {
@@ -1162,7 +1168,8 @@ async function syncAdminRequestsFromGoogleSheets() {
   const sheetId = localStorage.getItem('google_sheet_id') || GLOBAL_SHEET_ID;
   if (!sheetId) return;
 
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("행정 지원")}`;
+  // Add robust cache buster using a timestamp to bypass Google viz/tq cache and fetch real-time fresh data
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("행정 지원")}&tq=SELECT%20*%20&_=${Date.now()}`;
   try {
     const response = await fetch(url);
     if (!response.ok) return;
