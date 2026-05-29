@@ -4,7 +4,7 @@
    대시보드를 실행하는 모든 디바이스/사용자 컴퓨터에 공통으로 기본 연동됩니다!)
    ========================================================================== */
 const GLOBAL_SHEET_ID = "1cTqfUAxrHxdt7hso08SLnZbblBcHhtSTRU1iN3FTFnM"; // 기본 스프레드시트 ID
-const GLOBAL_SCRIPT_URL = ""; //여기에 구글 Apps Script Web App URL을 적어두세요! (예: https://script.google.com/macros/s/...)
+const GLOBAL_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1p6CQBTFcgyBoBpWxS3OK7frTRFvselwch1I2Mn2Zx6GvP6uTvJMXNhjhU0zIaAX0dg/exec"; //여기에 구글 Apps Script Web App URL을 적어두세요! (예: https://script.google.com/macros/s/...)
 
 // Global state variables
 let currentTab = 'guide';
