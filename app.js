@@ -34,6 +34,11 @@ let isAdminMode = false;
 let adminRequests = [];
 let expandedRequestIds = new Set();
 
+let activePasswords = {
+  door: '1234',
+  box: '7200'
+};
+
 const DEFAULT_REQUESTS = [];
 const DEFAULT_SCHEDULE = [
   { period: "1교시", start: "09:00", end: "09:40", days: { "월요일": "6-10/1학년", "화요일": "5-3", "수요일": "6-2/2-1", "목요일": "5-1/1-2", "금요일": "6-4/3-2" } },
@@ -298,6 +303,9 @@ function togglePassword(cardType, actualPassword) {
   const isRevealed = cardEl.dataset.revealed === "true";
   const hintEl = document.getElementById("box-pw-hint");
 
+  // Use activePasswords state as source of truth, fallback to parameter
+  const pw = activePasswords[cardType] || actualPassword;
+
   if (isRevealed) {
     textEl.textContent = "••••";
     textEl.classList.remove("revealed");
@@ -308,7 +316,7 @@ function togglePassword(cardType, actualPassword) {
     }
     cardEl.dataset.revealed = "false";
   } else {
-    textEl.textContent = actualPassword;
+    textEl.textContent = pw;
     textEl.classList.add("revealed");
     eyeBtn.innerHTML = `<i data-lucide="eye-off" class="w-3.5 h-3.5 text-blue-400"></i>`;
     copyBtn.classList.remove("hidden");
@@ -873,11 +881,24 @@ function initializeWarehouseLayout() {
   }
   renderAdminRequests();
   
+  // Load cached passwords from local storage
+  try {
+    const cachedPW = localStorage.getItem('active_passwords');
+    if (cachedPW) {
+      activePasswords = JSON.parse(cachedPW);
+    }
+  } catch (e) {}
+  updatePasswordUI();
+  
   // Fetch latest requests directly from the Google Sheet tab in the background!
   syncAdminRequestsFromGoogleSheets();
+  syncPasswordsFromGoogleSheets();
 
   // Keep all devices synchronized in real-time by polling Google Sheets every 30 seconds
-  setInterval(syncAdminRequestsFromGoogleSheets, 30000);
+  setInterval(() => {
+    syncAdminRequestsFromGoogleSheets();
+    syncPasswordsFromGoogleSheets();
+  }, 30000);
 }
 
 function rebuildRackMapping() {
@@ -1151,6 +1172,133 @@ async function fetchScheduleTab(sheetId) {
   return null;
 }
 
+async function fetchPasswordTab(sheetId) {
+  const candidates = ['비밀번호', '비밀번호목록', '비밀 번호', 'password', 'passwords', 'pw', 'PW'];
+  for (const name of candidates) {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}&tq=SELECT%20*%20&_=${Date.now()}`;
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          return text;
+        }
+      }
+    } catch (e) {
+      console.warn(`Failed password fetch for candidate: ${name}`, e);
+    }
+  }
+  return null;
+}
+
+async function syncPasswordsFromGoogleSheets() {
+  const sheetId = localStorage.getItem('google_sheet_id') || GLOBAL_SHEET_ID;
+  if (!sheetId) return;
+  
+  try {
+    const csvData = await fetchPasswordTab(sheetId);
+    if (csvData) {
+      syncPasswordsFromCSV(csvData);
+    }
+  } catch (err) {
+    console.warn("Failed to sync passwords from Google Sheets", err);
+  }
+}
+
+function syncPasswordsFromCSV(csvText) {
+  try {
+    const rows = parseCSV(csvText);
+    if (!rows || rows.length === 0) return;
+
+    let doorPw = null;
+    let boxPw = null;
+
+    const clean = s => s.toString().trim().replace(/^"|"$/g, '').replace(/\s+/g, '');
+    
+    // 1. Try vertical layout scan (Row 1: Key, Row 2: Value)
+    let foundVertical = false;
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i].map(clean);
+      if (row.length >= 2) {
+        const key = row[0];
+        const val = row[1];
+        if (key.includes("창고") || key.includes("출입문") || key.includes("문")) {
+          if (val && val.length > 0 && !isNaN(val)) {
+            doorPw = val;
+            foundVertical = true;
+          }
+        } else if (key.includes("보관함") || key.includes("공")) {
+          if (val && val.length > 0 && !isNaN(val)) {
+            boxPw = val;
+            foundVertical = true;
+          }
+        }
+      }
+    }
+    
+    // 2. Try horizontal layout scan (Row 1: Headers, Row 2: Values)
+    if (!foundVertical && rows.length >= 2) {
+      const headers = rows[0].map(clean);
+      const values = rows[1].map(clean);
+      for (let col = 0; col < headers.length; col++) {
+        const key = headers[col];
+        const val = values[col];
+        if (key.includes("창고") || key.includes("출입문") || key.includes("문")) {
+          if (val) doorPw = val;
+        } else if (key.includes("보관함") || key.includes("공")) {
+          if (val) boxPw = val;
+        }
+      }
+    }
+    
+    if (doorPw || boxPw) {
+      if (doorPw) activePasswords.door = doorPw;
+      if (boxPw) activePasswords.box = boxPw;
+      
+      try {
+        localStorage.setItem('active_passwords', JSON.stringify(activePasswords));
+      } catch (e) {}
+      
+      updatePasswordUI();
+      console.log("Passwords successfully synchronized from Google Sheets:", activePasswords);
+    }
+  } catch (err) {
+    console.error("Error parsing passwords CSV", err);
+  }
+}
+
+function updatePasswordUI() {
+  const doorCard = document.getElementById("card-door-pw");
+  if (doorCard) {
+    const textEl = doorCard.querySelector(".pw-text");
+    const isRevealed = doorCard.dataset.revealed === "true";
+    if (textEl) {
+      textEl.textContent = isRevealed ? activePasswords.door : "••••";
+    }
+    doorCard.setAttribute("onclick", `togglePassword('door', '${activePasswords.door}')`);
+    
+    const doorCopyBtn = doorCard.querySelector(".pw-copy-btn");
+    if (doorCopyBtn) {
+      doorCopyBtn.setAttribute("onclick", `event.stopPropagation(); copyToClipboard('${activePasswords.door}', this)`);
+    }
+  }
+
+  const boxCard = document.getElementById("card-box-pw");
+  if (boxCard) {
+    const textEl = boxCard.querySelector(".pw-text");
+    const isRevealed = boxCard.dataset.revealed === "true";
+    if (textEl) {
+      textEl.textContent = isRevealed ? activePasswords.box : "••••";
+    }
+    boxCard.setAttribute("onclick", `togglePassword('box', '${activePasswords.box}')`);
+    
+    const boxCopyBtn = boxCard.querySelector(".pw-copy-btn");
+    if (boxCopyBtn) {
+      boxCopyBtn.setAttribute("onclick", `event.stopPropagation(); copyToClipboard('${activePasswords.box}', this)`);
+    }
+  }
+}
+
 function saveScriptUrl() {
   const scriptUrlInput = document.getElementById("script-url-input");
   if (!scriptUrlInput) return;
@@ -1324,6 +1472,9 @@ async function syncGoogleSheets() {
 
     // Silently fetch and sync requests timeline tab!
     syncAdminRequestsFromGoogleSheets();
+
+    // Fetch and sync passwords!
+    syncPasswordsFromGoogleSheets();
 
     setTimeout(() => {
       syncIcon.classList.remove("animate-spin");
